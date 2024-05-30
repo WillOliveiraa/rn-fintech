@@ -1,3 +1,4 @@
+import { useSignUp } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -13,11 +14,29 @@ import Colors from "../constants/Colors";
 import { defaultStyles } from "../constants/Styles";
 
 const SignUp: React.FC = () => {
-  const [countryCode, setCountryCode] = useState("+55");
+  const [countryCode, setCountryCode] = useState("+351");
   const [phoneNumber, setPhoneNumber] = useState("");
   const keyboardVerticalOffset = Platform.OS === "ios" ? 80 : 0;
   const router = useRouter();
-  // const { signUp } = useSignUp();
+  const { signUp } = useSignUp();
+
+  const onSignup = async () => {
+    const fullPhoneNumber = `${countryCode}${phoneNumber}`;
+
+    try {
+      await signUp!.create({
+        phoneNumber: fullPhoneNumber,
+      });
+      signUp!.preparePhoneNumberVerification();
+
+      router.push({
+        pathname: "/verify/[phone]",
+        params: { phone: fullPhoneNumber },
+      });
+    } catch (error) {
+      console.error("Error signing up:", error);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -36,6 +55,7 @@ const SignUp: React.FC = () => {
             placeholder="Country code"
             placeholderTextColor={Colors.gray}
             value={countryCode}
+            onChangeText={setCountryCode}
           />
           <TextInput
             style={[styles.input, { flex: 5 }]}
@@ -63,7 +83,7 @@ const SignUp: React.FC = () => {
             phoneNumber !== "" ? styles.enabled : styles.disabled,
             { marginBottom: 20 },
           ]}
-          // onPress={onSignup}
+          onPress={onSignup}
         >
           <Text style={defaultStyles.buttonText}>Sign up</Text>
         </TouchableOpacity>
